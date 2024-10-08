@@ -20,6 +20,8 @@ class _MyAppState extends State<MyApp> {
   bool _connected = false;
   TestPrint testPrint = TestPrint();
 
+  BluetoothDevice? savedDevice;
+
   @override
   void initState() {
     super.initState();
@@ -115,6 +117,11 @@ class _MyAppState extends State<MyApp> {
     }
 
     bluetooth.reconnectPrinter();
+
+    final device = await bluetooth.getSavedDevice();
+    setState(() {
+      savedDevice = device;
+    });
   }
 
   @override
@@ -190,6 +197,16 @@ class _MyAppState extends State<MyApp> {
                       style: TextStyle(color: Colors.white)),
                 ),
               ),
+              SizedBox(height: 20.0),
+              Visibility(
+                visible: savedDevice != null,
+                child: Center(
+                  child: Text(
+                    "Saved Devices: ${savedDevice?.name ?? " "}",
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              )
             ],
           ),
         ),

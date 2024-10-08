@@ -69,6 +69,16 @@ class BlueThermalPrinter {
     return list.map((map) => BluetoothDevice.fromMap(map)).toList();
   }
 
+  Future<BluetoothDevice?> getSavedDevice() async {
+    final device = await (_channel.invokeMethod('getSavedPrinter'));
+    if (device == null) return null;
+    return BluetoothDevice.fromMap(device);
+  }
+
+  Future<void> removedSavedDevice() async {
+    return _channel.invokeMethod('removeSavedDevice');
+  }
+
   ///isDeviceConnected(BluetoothDevice device)
   Future<bool?> isDeviceConnected(BluetoothDevice device) =>
       _channel.invokeMethod('isDeviceConnected', device.toMap());
