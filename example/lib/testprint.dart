@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:blue_thermal_printer_example/printerenum.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:blue_thermal_printer/blue_thermal_printer.dart';
-import 'dart:io';
+import 'package:flutter_esc_pos_utils/flutter_esc_pos_utils.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 ///Test printing
 class TestPrint {
@@ -26,62 +28,93 @@ class TestPrint {
     //     .asUint8List(bytesAsset.offsetInBytes, bytesAsset.lengthInBytes);
     //
     // ///image from Network
-    // var response = await http.get(Uri.parse(
-    //     "https://raw.githubusercontent.com/kakzaki/blue_thermal_printer/master/example/assets/images/yourlogo.png"));
+    // var response = await http
+    //     .get(Uri.parse("https://pngimg.com/d/apple_logo_PNG19688.png"));
     // Uint8List bytesNetwork = response.bodyBytes;
     // Uint8List imageBytesFromNetwork = bytesNetwork.buffer
     //     .asUint8List(bytesNetwork.offsetInBytes, bytesNetwork.lengthInBytes);
 
-    bluetooth.isConnected.then((isConnected) {
-      if (isConnected == true) {
-        bluetooth.printNewLine();
-        bluetooth.printCustom("HI SANKAR!!!!", Size.boldMedium.val, Align.center.val);
-        bluetooth.printNewLine();
-        bluetooth.printNewLine();
-        bluetooth.printNewLine();
-        // bluetooth.printImage(file.path); //path of your image/logo
-        // bluetooth.printNewLine();
-        // bluetooth.printImageBytes(imageBytesFromAsset); //image from Asset
-        // bluetooth.printNewLine();
-        // bluetooth.printImageBytes(imageBytesFromNetwork); //image from Network
-        // bluetooth.printNewLine();
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.medium.val);
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.bold.val);
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.bold.val,
-        //     format:
-        //         "%-15s %15s %n"); //15 is number off character from left or right
-        // bluetooth.printNewLine();
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.boldMedium.val);
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.boldLarge.val);
-        // bluetooth.printLeftRight("LEFT", "RIGHT", Size.extraLarge.val);
-        // bluetooth.printNewLine();
-        // bluetooth.print3Column("Col1", "Col2", "Col3", Size.bold.val);
-        // bluetooth.print3Column("Col1", "Col2", "Col3", Size.bold.val,
-        //     format:
-        //         "%-10s %10s %10s %n"); //10 is number off character from left center and right
-        // bluetooth.printNewLine();
-        // bluetooth.print4Column("Col1", "Col2", "Col3", "Col4", Size.bold.val);
-        // bluetooth.print4Column("Col1", "Col2", "Col3", "Col4", Size.bold.val,
-        //     format: "%-8s %7s %7s %7s %n");
-        // bluetooth.printNewLine();
-        // bluetooth.printCustom("čĆžŽšŠ-H-ščđ", Size.bold.val, Align.center.val,
-        //     charset: "windows-1250");
-        // bluetooth.printLeftRight("Številka:", "18000001", Size.bold.val,
-        //     charset: "windows-1250");
-        // bluetooth.printCustom("Body left", Size.bold.val, Align.left.val);
-        // bluetooth.printCustom("Body right", Size.medium.val, Align.right.val);
-        // bluetooth.printNewLine();
-        // bluetooth.printCustom("Thank You", Size.bold.val, Align.center.val);
-        // bluetooth.printNewLine();
-        // bluetooth.printQRcode(
-        //     "Insert Your Own Text to Generate", 200, 200, Align.center.val);
-        // bluetooth.printNewLine();
-        // bluetooth.printNewLine();
-        bluetooth
-            .paperCut(); //some printer not supported (sometime making image not centered)
-        //bluetooth.drawerPin2(); // or you can use bluetooth.drawerPin5();
-      }
-    });
+    bluetooth.writeBytes(Uint8List.fromList(await testTicket()));
+
+    // bluetooth.isConnected.then((isConnected) {
+    // //   if (isConnected == true) {
+    //     bluetooth.printNewLine();
+    //     bluetooth.printCustom("HI SANKAR!!!!", Size.boldMedium.val, Align.center.val);
+    //     bluetooth.printNewLine();
+    //     bluetooth.printNewLine();
+    //     bluetooth.printNewLine();
+    // //     bluetooth.printNewLine();
+    // //     // bluetooth.printImage(file.path); //path of your image/logo
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printImageBytes(imageBytesFromAsset); //image from Asset
+    // //     bluetooth.printNewLine();
+    // //     bluetooth.printImageBytes(imageBytesFromNetwork); //image from Network
+    // //     bluetooth.printNewLine();
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.medium.val);
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.bold.val);
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.bold.val,
+    // //     //     format:
+    // //     //         "%-15s %15s %n"); //15 is number off character from left or right
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.boldMedium.val);
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.boldLarge.val);
+    // //     // bluetooth.printLeftRight("LEFT", "RIGHT", Size.extraLarge.val);
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.print3Column("Col1", "Col2", "Col3", Size.bold.val);
+    // //     // bluetooth.print3Column("Col1", "Col2", "Col3", Size.bold.val,
+    // //     //     format:
+    // //     //         "%-10s %10s %10s %n"); //10 is number off character from left center and right
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.print4Column("Col1", "Col2", "Col3", "Col4", Size.bold.val);
+    // //     // bluetooth.print4Column("Col1", "Col2", "Col3", "Col4", Size.bold.val,
+    // //     //     format: "%-8s %7s %7s %7s %n");
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printCustom("čĆžŽšŠ-H-ščđ", Size.bold.val, Align.center.val,
+    // //     //     charset: "windows-1250");
+    // //     // bluetooth.printLeftRight("Številka:", "18000001", Size.bold.val,
+    // //     //     charset: "windows-1250");
+    // //     // bluetooth.printCustom("Body left", Size.bold.val, Align.left.val);
+    // //     // bluetooth.printCustom("Body right", Size.medium.val, Align.right.val);
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printCustom("Thank You", Size.bold.val, Align.center.val);
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printQRcode(
+    // //     //     "Insert Your Own Text to Generate", 200, 200, Align.center.val);
+    // //     // bluetooth.printNewLine();
+    // //     // bluetooth.printNewLine();
+    // //     bluetooth
+    // //         .paperCut(); //some printer not supported (sometime making image not centered)
+    // //     //bluetooth.drawerPin2(); // or you can use bluetooth.drawerPin5();
+    // //   }
+    // });
+  }
+
+  Future<List<int>> testTicket() async {
+    // Using default profile
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm80, profile);
+    List<int> bytes = [];
+
+    bytes += generator.text('Bold text', styles: PosStyles(bold: true));
+    bytes += generator.text('Reverse text', styles: PosStyles(reverse: true));
+    bytes += generator.text('Underlined text',
+        styles: PosStyles(underline: true), linesAfter: 1);
+    bytes +=
+        generator.text('Align left', styles: PosStyles(align: PosAlign.left));
+    bytes += generator.text('Align center',
+        styles: PosStyles(align: PosAlign.center));
+    bytes += generator.text('Align right',
+        styles: PosStyles(align: PosAlign.right), linesAfter: 1);
+
+    bytes += generator.text('Text size 200%',
+        styles: PosStyles(
+          height: PosTextSize.size2,
+          width: PosTextSize.size2,
+        ));
+
+    bytes += generator.feed(2);
+    bytes += generator.cut();
+    return bytes;
   }
 
 //   sample(String pathImage) async {

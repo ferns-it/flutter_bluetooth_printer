@@ -226,6 +226,10 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                 reconnectPrinter(result);
                 break;
 
+            case "getSavedPrinter":
+                getSavedPrinter(result);
+                break;
+
             case "isOn":
                 try {
                     result.success(mBluetoothAdapter.isEnabled());
@@ -397,6 +401,7 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
         }
     }
 
+
     /**
      * @param requestCode  requestCode
      * @param permissions  permissions
@@ -555,6 +560,31 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                 result.error("connect_error", ex.getMessage(), exceptionToString(ex));
             }
         });
+    }
+
+
+    private void getSavedPrinter(Result result) {
+        String address = getDeviceAddress();
+        if (address == null) {
+            result.success(null);
+            return;
+        }
+
+        try {
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+
+            // Create a map to hold device details
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("address", device.getAddress());
+            ret.put("name", device.getName());
+            ret.put("type", device.getType());
+
+            // Return the device details
+            result.success(ret);
+        } catch (IllegalArgumentException e) {
+            // Invalid address or error occurred while getting the Bluetooth device
+            result.success(null);
+        }
     }
 
 
