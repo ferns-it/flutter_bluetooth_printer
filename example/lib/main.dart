@@ -1,7 +1,8 @@
+import 'dart:async';
+
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:blue_thermal_printer_example/testprint.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/services.dart';
 
 void main() => runApp(new MyApp());
@@ -23,6 +24,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+    bluetooth.reconnectPrinter();
   }
 
   Future<void> initPlatformState() async {
@@ -40,6 +42,7 @@ class _MyAppState extends State<MyApp> {
     // showDialogSayingThatThisPermissionIsRequired());
     // }
     bool? isConnected = await bluetooth.isConnected;
+
     List<BluetoothDevice> devices = [];
     try {
       devices = await bluetooth.getBondedDevices();
@@ -142,6 +145,7 @@ class _MyAppState extends State<MyApp> {
                       onChanged: (BluetoothDevice? value) =>
                           setState(() => _device = value),
                       value: _device,
+                      isExpanded: true,
                     ),
                   ),
                 ],
@@ -151,10 +155,9 @@ class _MyAppState extends State<MyApp> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(primary: Colors.brown),
+                  FilledButton(
                     onPressed: () {
-                      initPlatformState();
+                      // initPlatformState();
                     },
                     child: const Text(
                       'Refresh',
@@ -162,9 +165,10 @@ class _MyAppState extends State<MyApp> {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  ElevatedButton(
+                  FilledButton(
                     style: ElevatedButton.styleFrom(
-                        primary: _connected ? Colors.red : Colors.green),
+                        foregroundColor:
+                            _connected ? Colors.red : Colors.green),
                     onPressed: _connected ? _disconnect : _connect,
                     child: Text(
                       _connected ? 'Disconnect' : 'Connect',
@@ -176,8 +180,8 @@ class _MyAppState extends State<MyApp> {
               Padding(
                 padding:
                     const EdgeInsets.only(left: 10.0, right: 10.0, top: 50),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(primary: Colors.brown),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(foregroundColor: Colors.brown),
                   onPressed: () {
                     testPrint.sample();
                   },
@@ -209,19 +213,24 @@ class _MyAppState extends State<MyApp> {
     return items;
   }
 
+  // 00:11:22:33:44:55
+
   void _connect() {
-    if (_device != null) {
-      bluetooth.isConnected.then((isConnected) {
-        if (isConnected == false) {
-          bluetooth.connect(_device!).catchError((error) {
-            setState(() => _connected = false);
-          });
-          setState(() => _connected = true);
-        }
-      });
-    } else {
-      show('No device selected.');
-    }
+    final device = BluetoothDevice("Inner Printer", "00:11:22:33:44:55");
+    bluetooth.connect(device);
+
+    // if (_device != null) {
+    //   bluetooth.isConnected.then((isConnected) {
+    //     if (isConnected == false) {
+    //       bluetooth.connect(_device!).catchError((error) {
+    //         setState(() => _connected = false);
+    //       });
+    //       setState(() => _connected = true);
+    //     }
+    //   });
+    // } else {
+    //   show('No device selected.');
+    // }
   }
 
   void _disconnect() {

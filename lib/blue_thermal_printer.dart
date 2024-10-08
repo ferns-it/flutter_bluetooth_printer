@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
@@ -77,6 +76,10 @@ class BlueThermalPrinter {
   ///connect(BluetoothDevice device)
   Future<dynamic> connect(BluetoothDevice device) =>
       _channel.invokeMethod('connect', device.toMap());
+
+  ///reconnectPrinter()
+  Future<dynamic> reconnectPrinter() =>
+      _channel.invokeMethod('reconnectPrinter');
 
   ///disconnect()
   Future<dynamic> disconnect() => _channel.invokeMethod('disconnect');
