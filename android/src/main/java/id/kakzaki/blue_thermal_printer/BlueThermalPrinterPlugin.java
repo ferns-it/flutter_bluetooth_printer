@@ -158,8 +158,6 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
 
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        Log.d("onActivityResult", "Reached!");
-
         if (requestCode == REQUEST_ENABLE_BT) {
             if (reconnectPrinterPendingResult != null) {
                 if (resultCode == Activity.RESULT_OK) {
@@ -245,6 +243,10 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                     String address = (String) arguments.get("address");
                     isDeviceConnected(result, address);
                 }
+                break;
+
+            case "removeSavedDevice":
+                removeDeviceAddress(result);
                 break;
 
             case "openSettings":
@@ -334,48 +336,40 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                 break;
 
             case "printImage":
-                if (arguments.containsKey("pathImage")) {
+                if (arguments != null && arguments.containsKey("pathImage")) {
                     String pathImage = (String) arguments.get("pathImage");
                     printImage(result, pathImage);
-                } else {
-                    result.error("invalid_argument", "argument 'pathImage' not found", null);
                 }
                 break;
 
             case "printImageBytes":
-                if (arguments.containsKey("bytes")) {
+                if (arguments != null && arguments.containsKey("bytes")) {
                     byte[] bytes = (byte[]) arguments.get("bytes");
                     printImageBytes(result, bytes);
-                } else {
-                    result.error("invalid_argument", "argument 'bytes' not found", null);
                 }
                 break;
 
             case "printQRcode":
-                if (arguments.containsKey("textToQR")) {
+                if (arguments != null && arguments.containsKey("textToQR")) {
                     String textToQR = (String) arguments.get("textToQR");
                     int width = (int) arguments.get("width");
                     int height = (int) arguments.get("height");
                     int align = (int) arguments.get("align");
                     printQRcode(result, textToQR, width, height, align);
-                } else {
-                    result.error("invalid_argument", "argument 'textToQR' not found", null);
                 }
                 break;
             case "printLeftRight":
-                if (arguments.containsKey("string1")) {
+                if (arguments != null && arguments.containsKey("string1")) {
                     String string1 = (String) arguments.get("string1");
                     String string2 = (String) arguments.get("string2");
                     int size = (int) arguments.get("size");
                     String charset = (String) arguments.get("charset");
                     String format = (String) arguments.get("format");
                     printLeftRight(result, string1, string2, size, charset, format);
-                } else {
-                    result.error("invalid_argument", "argument 'message' not found", null);
                 }
                 break;
             case "print3Column":
-                if (arguments.containsKey("string1")) {
+                if (arguments != null && arguments.containsKey("string1")) {
                     String string1 = (String) arguments.get("string1");
                     String string2 = (String) arguments.get("string2");
                     String string3 = (String) arguments.get("string3");
@@ -383,12 +377,10 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                     String charset = (String) arguments.get("charset");
                     String format = (String) arguments.get("format");
                     print3Column(result, string1, string2, string3, size, charset, format);
-                } else {
-                    result.error("invalid_argument", "argument 'message' not found", null);
                 }
                 break;
             case "print4Column":
-                if (arguments.containsKey("string1")) {
+                if (arguments != null && arguments.containsKey("string1")) {
                     String string1 = (String) arguments.get("string1");
                     String string2 = (String) arguments.get("string2");
                     String string3 = (String) arguments.get("string3");
@@ -397,8 +389,6 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
                     String charset = (String) arguments.get("charset");
                     String format = (String) arguments.get("format");
                     print4Column(result, string1, string2, string3, string4, size, charset, format);
-                } else {
-                    result.error("invalid_argument", "argument 'message' not found", null);
                 }
                 break;
             default:
@@ -585,14 +575,17 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
     }
 
 
-    private void removeDeviceAddress() {
-        String uniquePrefsName = context.getPackageName() + "_BluetoothPrefs";
-        SharedPreferences sharedPreferences = context.getSharedPreferences(uniquePrefsName, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove("bluetooth_device_address");
-        editor.apply();
-
-        Log.d(TAG, "Device address removed");
+    private void removeDeviceAddress(Result result) {
+        try {
+            String uniquePrefsName = context.getPackageName() + "_BluetoothPrefs";
+            SharedPreferences sharedPreferences = context.getSharedPreferences(uniquePrefsName, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.remove("bluetooth_device_address");
+            editor.apply();
+            result.success("Device address removed");
+        } catch (Exception ex) {
+            result.error(TAG, ex.getMessage(), exceptionToString(ex));
+        }
     }
 
 
@@ -1216,30 +1209,34 @@ public class BlueThermalPrinterPlugin implements FlutterPlugin, ActivityAware, M
             @Override
             public void onReceive(Context context, Intent intent) {
                 final String action = intent.getAction();
-
-                Log.d(TAG, action);
-
-                switch (action) {
-                    case BluetoothAdapter.ACTION_STATE_CHANGED:
-                        THREAD = null;
-                        int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
-                        if (state == BluetoothAdapter.STATE_ON) {
-                            statusSink.success(BluetoothAdapter.STATE_ON);
-                            reconnectPrinter();
-                        }
-                        statusSink.success(state);
-                        break;
-                    case BluetoothDevice.ACTION_ACL_CONNECTED:
-                        statusSink.success(1);
-                        break;
-                    case BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED:
-                        THREAD = null;
-                        statusSink.success(2);
-                        break;
-                    case BluetoothDevice.ACTION_ACL_DISCONNECTED:
-                        THREAD = null;
-                        statusSink.success(0);
-                        break;
+                if (action != null) {
+                    switch (action) {
+                        case BluetoothAdapter.ACTION_STATE_CHANGED:
+                            THREAD = null;
+                            int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+                            if (state == BluetoothAdapter.STATE_ON) {
+                                statusSink.success(BluetoothAdapter.STATE_ON);
+                                reconnectPrinter();
+                            } else if (state == BluetoothAdapter.STATE_OFF) {
+                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                // Assuming this is in an Activity, otherwise you will need to pass the activity context
+                                startActivityForResult(activity, enableBtIntent, REQUEST_ENABLE_BT, null);
+                                Log.d("bluetooth_status", "Bluetooth is not enabled. Requesting user to enable it.");
+                            }
+                            statusSink.success(state);
+                            break;
+                        case BluetoothDevice.ACTION_ACL_CONNECTED:
+                            statusSink.success(1);
+                            break;
+                        case BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED:
+                            THREAD = null;
+                            statusSink.success(2);
+                            break;
+                        case BluetoothDevice.ACTION_ACL_DISCONNECTED:
+                            THREAD = null;
+                            statusSink.success(0);
+                            break;
+                    }
                 }
             }
         };

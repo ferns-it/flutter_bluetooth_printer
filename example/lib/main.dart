@@ -24,7 +24,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
-    bluetooth.reconnectPrinter();
   }
 
   Future<void> initPlatformState() async {
@@ -114,6 +113,8 @@ class _MyAppState extends State<MyApp> {
         _connected = true;
       });
     }
+
+    bluetooth.reconnectPrinter();
   }
 
   @override
